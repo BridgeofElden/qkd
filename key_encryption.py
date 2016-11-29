@@ -155,8 +155,14 @@ def apply_quantum_gates(number_of_bits, random_key):
         bob_qbit_list.append(decoded_qbit)
     list_of_matched_numbers = []
     gate_matches = [i for i, j in zip(bob_gate_list, alice_gate_list) if i == j]
+                    
+                    
             
-def match_qbits(gate_matches)        
+def match_qbits(gate_matches)
+    """
+    Finds qubits that correspond to gate matches and matches a selection of those qubits.
+    """        
+    
     if gate_matches == []:
         print("Whoops! The random gate generators did not produce any gates in common!")
         print(gate_matches)
