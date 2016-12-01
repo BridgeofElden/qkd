@@ -7,6 +7,7 @@ Created on Fri Nov 25 21:46:54 2016
 """
 from random import random, choice, shuffle
 import numpy as np
+import time
 # from Crypto.Cipher import AES
         
 class QKD():
@@ -112,10 +113,11 @@ def apply_quantum_gates(number_of_bits, random_key):
             
         probabilities.append((qbit.alpha, qbit.beta))
         alice_qbit_list.append(qbit_value)
-
-        print('gate: {0}; qubit: {1}'.format(gate_chosen, str(qbit)))
+        
+#        print('gate: {0}; qubit: {1}'.format(gate_chosen, str(qbit)))
+        
+    alice_gate_tuple_1 = (alice_gate_list)
     
-    bob_gate_list = []
     for i in range(number_of_bits):
         cbit_value = 0
         gate_chosen = choice(possible_gates)
@@ -132,7 +134,8 @@ def apply_quantum_gates(number_of_bits, random_key):
             
         bob_key_recovered.append(cbit_value)
 
-        print('gate: {0}'.format(gate_chosen))
+    
+#        print('gate: {0}'.format(gate_chosen))
     
     gate_matches = [i if i == j else "No Match" for i, j in zip(bob_gate_list, alice_gate_list)]
     return gate_matches, bob_key_recovered, alice_qbit_list, alice_gate_list, bob_gate_list
@@ -190,7 +193,30 @@ def match_qbits(gate_matches, alice_qbit_list, alice_gate_list, bob_key_recovere
         print('matches: {0}'.format(qbit_matches))
 
     return qbit_matches
-
+"""
+EXPERIMENTAL
+def eve_interference(alice_qbit_list):
+    """"""
+    Runs simulated interference from Eve, the third party in BB84
+    """"""
+    for n in range(len(alice_qbit_list)):
+        print(alice_qbit_list)
+        alice_qbit = alice_qbit_list[n]
+        gate_choice = choice(["hadamard", "identity"])
+        if gate_choice == "hadamard":
+            encoding_choice = choice(["encoding", "decoding"])
+            hadamard_results = apply_hadamard_gate(alice_qbit, mode = "encoding")
+            if alice_qbit != hadamard_results:
+                alice_qbit_list[n] = hadamard_results
+            
+            else :
+                print("Eavesdropping unsuccessful on bit number {0}".format(n + 1))
+                
+        else :
+            apply_identity_gate(alice_qbit)
+    print(alice_qbit_list[n])    
+    return alice_qbit_list
+"""
 
 def aes_encryption(key):
     """
@@ -205,11 +231,18 @@ def aes_encryption(key):
         
 
 def run_main():
+
+    time1 = time.time()
     random_key, string_to_be_encrypted, number_of_bits = create_key(number_of_bits=32)
+    time2 = time.time()
+    print("random_key_runtime: {0} seconds.".format(time2 - time1))
     gate_matches, bob_key_recovered, alice_qbit_list, alice_gate_list, bob_gate_list = apply_quantum_gates(number_of_bits, random_key)
-    qbit_matches = match_qbits(gate_matches, alice_qbit_list, alice_gate_list, bob_key_recovered, bob_gate_list, random_key, print_gates=True)
-
-
+    time3 = time.time()
+    print("apply_quantum_gates_runtime: {0} seconds.".format(time3 - time2))
+    #    alice_qbit_list = eve_interference(alice_qbit_list)
+    qbit_matches = match_qbits(gate_matches, alice_qbit_list, alice_gate_list, bob_key_recovered, bob_gate_list, random_key, print_gates=False)
+    print("Runtime: {0} seconds.".format(time.time() - time3))
+    
 # Create the key for Alice
     # Make a random list of quantum gates Alice
     # Apply the gates to each key bit to create the quantum qubit states
