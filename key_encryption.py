@@ -5,7 +5,7 @@ Created on Fri Nov 25 21:46:54 2016
 
 @author: larry
 """
-from random import random, choice, randint
+from random import random, choice
 import numpy as np
 import time
 from math import ceil
@@ -77,7 +77,7 @@ def create_key(number_of_bits=8):
     Creates key to be used in QKD. Key size will be variable. Also logs string to be encrypted
     """    
     string_to_be_encrypted = "supercalifragilisticxpalidocious"
-    # Create the key
+#     Create the key
     possible_bits = [1, 0]
     random_key = [choice(possible_bits) for i in range(number_of_bits)]
 #    print(random_key)
@@ -91,8 +91,8 @@ def apply_quantum_gates_alice(random_key):
     Applies either Hadamard or identity quantum gate to each bit in number_of_bits.
     """
 
-    # Create Qubits to represent the key
-    # Apply Hadamard and identity gates randomly
+#     Create Qubits to represent the key
+#     Apply Hadamard and identity gates randomly
     alice_qbit_list = []
     probabilities = []
     possible_gates = ['hadamard', 'identity']
@@ -111,8 +111,7 @@ def apply_quantum_gates_alice(random_key):
         probabilities.append((qbit.alpha, qbit.beta))
         alice_qbit_list.append(qbit_value)
         
-    print(random_key)
-    print(alice_qbit_list)        
+        
     return alice_qbit_list, possible_gates
         
 def apply_quantum_gates_bob(alice_qbit_list, possible_gates):
@@ -122,17 +121,16 @@ def apply_quantum_gates_bob(alice_qbit_list, possible_gates):
         gate_chosen = choice(possible_gates)
         
         
-        #applying Hadamard Gate
+#        applying Hadamard Gate
         if gate_chosen == 'hadamard':
             bit_value = apply_hadamard_gate(i, mode = "decoding")
                 
         else :
-            #applying identity gate
+#            applying identity gate
             bit_value = apply_identity_gate(i)
         
         bob_bit_list.append(bit_value)
                             
-    print(bob_bit_list)
         
     return bob_bit_list
             
@@ -143,9 +141,7 @@ def match_qbits(random_key, bob_bit_list):
     """
     Matches lists of bits. Taken from original list and bob's decoded list.
     """
-    #choosing bits to compare
-#    number_of_failed_conversions = bob_bit_list.count("?")
-#    print(len(bob_bit_list))
+#   choosing bits to compare
     new_key = []
     alice_success_list = []
     bob_success_list = []            
@@ -156,38 +152,32 @@ def match_qbits(random_key, bob_bit_list):
         if bob_bit == "?":
             continue
         else:
+#            making lists of successful gate matches
             alice_success_list.append(alice_bit)
             bob_success_list.append(bob_bit)
             
-            
+#   determining number of needed iterations for comparing bits             
     bob_success_list_len = len(bob_success_list)
     number_of_iterations = int(ceil(bob_success_list_len/2))
-    print(number_of_iterations)
         
     for i in range(0, number_of_iterations):
         alice_success_bit = alice_success_list[i]
         bob_success_bit = bob_success_list[i]
 
 
-        print(alice_success_bit)
-        print(bob_success_bit)
         
-        
+#       comparing bits to each other
         if alice_success_bit == bob_success_bit:
             continue
-            print("-" + i)
             
             
         else:
             raise Exception ('Eavesdropper detected, aborting communications')
             quit
             
-    print(bob_success_list)        
+
     del bob_success_list[0:number_of_iterations]
     new_key = bob_success_list
-    print("hello")    
-    print(new_key)        
-    #not to be printed in final code version
         
         
 
