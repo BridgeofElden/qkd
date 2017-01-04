@@ -72,17 +72,17 @@ def apply_identity_gate(bit):
         return "?"
         
 
-def create_key(number_of_bits=8):
+def create_key(number_of_bits=128):
     """
     Creates key to be used in QKD. Key size will be variable. Also logs string to be encrypted
     """    
-    string_to_be_encrypted = "supercalifragilisticxpalidocious"
+    message = "supercalifragilisticxpalidocious"
 #     Create the key
     possible_bits = [1, 0]
     random_key = [choice(possible_bits) for i in range(number_of_bits)]
 #    print(random_key)
     number_of_bits = int(number_of_bits)
-    return random_key, string_to_be_encrypted, number_of_bits
+    return random_key, message, number_of_bits
         
     
     
@@ -211,15 +211,16 @@ def eve_interference(alice_qbit_list):
     return alice_qbit_list
 
 
-def aes_encryption(key):
+def aes_encryption(new_key, message, number_of_bits):
     """
     Applies AES encryption using distributed key
     """
-    key_length = len(key)
+    key_length = len(new_key)
+    str(new_key)
     if key_length < 16:
         for i in range(16-key_length):
             new_bit = choice([1, 0])
-            key.format(new_bit)
+            new_key.format(new_bit)
             
 time_list_1 = []
 time_list_2 = []
@@ -228,17 +229,30 @@ time_list_3 = []
 def run_main(time_list_1, time_list_2, time_list_3): 
     time1 = time.time()
     random_key, string_to_be_encrypted, number_of_bits = create_key(number_of_bits=128)
+    
+    
     time2 = time.time()
+    
     print("random_key_runtime: {0} seconds.".format(time2 - time1))
+    
+    
     alice_qbit_list, possible_gates = apply_quantum_gates_alice(random_key)
     bob_bit_list = apply_quantum_gates_bob(alice_qbit_list, possible_gates)
+    
+    
     time3 = time.time()
+    
     print("apply_quantum_gates_runtime: {0} seconds.".format(time3 - time2))
+    
+    
     match_qbits(random_key, bob_bit_list)
     #    alice_qbit_list = eve_interference(alice_qbit_list)
     
     time4 = time.time()
+    
     print("Runtime: {0} seconds.".format(time.time() - time1))
+    
+    
     time_list_1.append(time2 - time1)
     time_list_2.append(time3 - time2)
     time_list_3.append(time4 - time1)
