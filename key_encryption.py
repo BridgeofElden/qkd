@@ -9,7 +9,7 @@ from random import random, choice
 import numpy as np
 import time
 from math import ceil
-# from Crypto.Cipher import AES
+from Crypto.Cipher import AES
         
 class QKD():
     """
@@ -72,18 +72,21 @@ def apply_identity_gate(bit):
         return "?"
         
 
-def create_key(number_of_bits=128):
+def create_key(number_of_bits=128, rerun = False):
     """
     Creates key to be used in QKD. Key size will be variable. Also logs string to be encrypted
     """    
-    message = "supercalifragilisticxpalidocious"
+    message = "believe in hope."
 #     Create the key
     possible_bits = [1, 0]
     random_key = [choice(possible_bits) for i in range(number_of_bits)]
 #    print(random_key)
     number_of_bits = int(number_of_bits)
-    return random_key, message, number_of_bits
-        
+    if rerun:
+        random_key_2 = random_key
+        return random_key_2, number_of_bits, message
+    else :
+        return random_key, number_of_bits, message
     
     
 def apply_quantum_gates_alice(random_key):
@@ -96,17 +99,18 @@ def apply_quantum_gates_alice(random_key):
     alice_qbit_list = []
     probabilities = []
     possible_gates = ['hadamard', 'identity']
-    for i in (random_key):
+    print(random_key)
+    for x in range(len(random_key)):
         qbit = QKD()
         gate_chosen = choice(possible_gates)
         
         #applying Hadamard Gate
         if gate_chosen == 'hadamard':
-            qbit_value = apply_hadamard_gate(i, mode = "encoding")
+            qbit_value = apply_hadamard_gate(random_key[x], mode = "encoding")
                 
         else :
             #applying identity gate
-            qbit_value = apply_identity_gate(random_key[i])
+            qbit_value = apply_identity_gate(random_key[x])
             
         probabilities.append((qbit.alpha, qbit.beta))
         alice_qbit_list.append(qbit_value)
@@ -146,7 +150,7 @@ def match_qbits(random_key, bob_bit_list):
     alice_success_list = []
     bob_success_list = []            
         
-    for i in range(0, 63):
+    for i in range(len(random_key)):
         alice_bit = random_key[i]
         bob_bit = bob_bit_list[i]
         if bob_bit == "?":
@@ -165,7 +169,8 @@ def match_qbits(random_key, bob_bit_list):
         bob_success_bit = bob_success_list[i]
 
 
-        
+#        print(alice_success_bit)
+#        print(bob_success_bit)    
 #       comparing bits to each other
         if alice_success_bit == bob_success_bit:
             continue
@@ -181,7 +186,7 @@ def match_qbits(random_key, bob_bit_list):
         
         
 
-
+    print(new_key)
 
 
     return new_key
@@ -192,22 +197,22 @@ def eve_interference(alice_qbit_list):
     """
     Runs simulated interference from Eve, the third party in BB84
     """
-    for n in range(len(alice_qbit_list)):
-        print(alice_qbit_list)
-        alice_qbit = alice_qbit_list[n]
-        gate_choice = choice(["hadamard", "identity"])
-        if gate_choice == "hadamard":
-            encoding_choice = choice(["encoding", "decoding"])
-            hadamard_results = apply_hadamard_gate(alice_qbit, mode = "encoding")
-            if alice_qbit != hadamard_results:
-                alice_qbit_list[n] = hadamard_results
-            
-            else :
-                print("Eavesdropping unsuccessful on bit number {0}".format(n + 1))
-                
+    eve_qbit_list = []
+    for i in alice_qbit_list:
+        gate_choice = choice(["identity", "hadamard"])
+        if gate_choice == "identity":
+            apply_identity_gate(i)
+            eve_qbit_list.append(i)
         else :
-            apply_identity_gate(alice_qbit)
-    print(alice_qbit_list[n])    
+            encoding_choice = choice(["encoding", "decoding"])
+            new_item = apply_hadamard_gate(i, mode = encoding_choice)
+            eve_qbit_list.append(new_item)
+    alice_list2 = alice_qbit_list        
+    for i in range(len(alice_list2)):
+          alice_qbit_list[i] = eve_qbit_list[i]
+
+
+    
     return alice_qbit_list
 
 
@@ -215,20 +220,79 @@ def aes_encryption(new_key, message, number_of_bits):
     """
     Applies AES encryption using distributed key
     """
+    print(new_key)
     key_length = len(new_key)
-    str(new_key)
     if key_length < 16:
-        for i in range(16-key_length):
-            new_bit = choice([1, 0])
-            new_key.format(new_bit)
-            
+        while key_length < 16:
+            random_key_2, number_of_bits, message = create_key(number_of_bits=128, rerun = True)
+            alice_qbit_list, possible_gates = apply_quantum_gates_alice(random_key_2)
+            bob_bit_list = apply_quantum_gates_bob(alice_qbit_list, possible_gates)
+            match_qbits(random_key_2, bob_bit_list)
+            for i in range(16-key_length):
+                new_bit = choice(random_key_2)
+    #            print(random_key)
+    #            print("random")
+    #            print(new_bit)
+    #            print(type(new_bit))
+                new_key.append(new_bit)
+            key_length = len(new_key)
+        IV = "This is an IV123"
+        print(new_key)
+        key = [str(item) for item in new_key]
+        print(key)
+        stringified_key = "".join(key)
+        object1 = AES.new(stringified_key, AES.MODE_CBC, IV)
+        encrypted_text = object1.encrypt(message)
+        print(encrypted_text)
+        return stringfied_key, encrypted_text
+    
+    elif key_length > 16:
+        number_of_removed_bits = key_length - 16
+        second_new_key = new_key[:-(number_of_removed_bits)]
+        IV = "This is an IV123"
+        print(second_new_key)
+        key = [str(item) for item in second_new_key]
+        print(key)
+        stringified_key = "".join(key)
+        object1 = AES.new(stringified_key, AES.MODE_CBC, IV)
+        encrypted_text = object1.encrypt(message)
+        print(encrypted_text)
+        return stringified_key, encrypted_text
+    else :
+        IV = "This is an IV123"
+        print(new_key)
+        key = [str(item) for item in new_key]
+        print(key)
+        stringified_key = "".join(key)
+        object1 = AES.new(stringified_key, AES.MODE_CBC, IV)
+        encrypted_text = object1.encrypt(message)
+        print(encrypted_text)
+        return stringified_key, encrypted_text
+    
+        
+
+    
+def aes_decryption(encrypted_text, stringified_key):
+    """
+    Applies AES decryption using key
+    """        
+    object2 = AES.new(stringfied_key, AES.MODE_CBC, "This is an IV123")
+    decrypted_text = object2.decrypt(encrypted_text)
+    print(decrypted_text)
+    print(decrypted_text)
+
+
+    return decrypted_text 
+
+    
+    
+
 time_list_1 = []
 time_list_2 = []
-time_list_3 = [] 
-
-def run_main(time_list_1, time_list_2, time_list_3): 
+time_list_3 = []
+def run_main(time_list_1, time_list_2, time_list_3, eve = True): 
     time1 = time.time()
-    random_key, string_to_be_encrypted, number_of_bits = create_key(number_of_bits=128)
+    random_key, number_of_bits, message = create_key(number_of_bits=128)
     
     
     time2 = time.time()
@@ -237,16 +301,18 @@ def run_main(time_list_1, time_list_2, time_list_3):
     
     
     alice_qbit_list, possible_gates = apply_quantum_gates_alice(random_key)
-    bob_bit_list = apply_quantum_gates_bob(alice_qbit_list, possible_gates)
+    
     
     
     time3 = time.time()
     
     print("apply_quantum_gates_runtime: {0} seconds.".format(time3 - time2))
-    
-    
-    match_qbits(random_key, bob_bit_list)
-    #    alice_qbit_list = eve_interference(alice_qbit_list)
+    if eve:
+        alice_qbit_list = eve_interference(alice_qbit_list)
+        
+    bob_bit_list = apply_quantum_gates_bob(alice_qbit_list, possible_gates)
+    new_key = match_qbits(random_key, bob_bit_list)
+
     
     time4 = time.time()
     
@@ -256,7 +322,7 @@ def run_main(time_list_1, time_list_2, time_list_3):
     time_list_1.append(time2 - time1)
     time_list_2.append(time3 - time2)
     time_list_3.append(time4 - time1)
-    return time_list_1, time_list_2, time_list_3
+    return new_key, message, number_of_bits
     """
     Alice makes 128 bit string
     Alice encodes into qubits
@@ -285,8 +351,10 @@ def run_main(time_list_1, time_list_2, time_list_3):
 
 
 if __name__ == '__main__':
-    run_main(time_list_1, time_list_2, time_list_3)
-
+    new_key, message, number_of_bits = run_main(time_list_1, time_list_2, time_list_3, eve = False)
+    print(time_list_1, time_list_2, time_list_3)
+    stringfied_key, encrypted_text = aes_encryption(new_key, message, number_of_bits)
+    aes_decryption(encrypted_text, stringfied_key)
     
     
     
